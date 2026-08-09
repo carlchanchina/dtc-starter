@@ -1,0 +1,80 @@
+# Local backend development environment for the Medusa DTC starter.
+#
+#   cp .env.example .env   # edit values (db password, secrets)
+#   docker compose up --build
+#
+# Backend: http://localhost:9000  (admin dashboard at /app)
+# Postgres: localhost:5432        (medusa/medusa/medusa)
+# Redis:    localhost:6379
+#
+# NOTE: `.env` is read automatically by Compose AND merged into the backend
+# container. Values below are defaults; override them in `.env`.
+
+name: dtc
+
+services:
+  backend:
+    build:
+      # build context = repo root so the Dockerfile can reach the lockfile
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    image: ghcr.io/${IMAGE_OWNER:-your-org}/dtc-backend:${IMAGE_TAG:-local}
+    ports:
+      - '9000:9000'
+    environment:
+      NODE_ENV: production
+      PORT: 9000
+      DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa?ssl_mode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      COOKIE_SECRET: ${COOKIE_SECRET:-supersecret}
+      STORE_CORS: ${STORE_CORS:-http://localhost:8000,http://localhost:3000}
+      ADMIN_CORS: ${ADMIN_CORS:-http://localhost:9000,http://localhost:7001,http://localhost:3000}
+      AUTH_CORS: ${AUTH_CORS:-http://localhost:9000,http://localhost:8000,http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Run migrations once at startup, then start the server on the same
+    # container. For a single-node local box this is convenient; on a cluster
+    # prefer a separate one-shot migration job.
+    entrypoint:
+      - sh
+      - -c
+      - medusa db:migrate && medusa start
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: medusa
+      POSTGRES_PASSWORD: medusa
+      POSTGRES_DB: medusa
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U medusa -d medusa']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

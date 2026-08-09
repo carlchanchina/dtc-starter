@@ -1,0 +1,35 @@
+# Dependencies
+**/node_modules
+.pnp
+.pnp.js
+.yarn
+.pnpm-store
+
+# Build output
+**/dist
+**/build
+**/.next
+**/out
+**/.medusa
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+
+# Env / secrets — never copy local env or secrets into the image
+**/.env
+**/.env.*
+!**/.env.template
+**/.env.bak
+
+# Git / CI / IDE
+.git
+.github
+.idea
+.vscode
+.DS_Store
+
+# Local DB / uploads / logs
+apps/backend/uploads
+apps/backend/medusa-db.sql
+*.log
+npm-debug.log*
