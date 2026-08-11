@@ -65,7 +65,7 @@ RUN pnpm exec medusa build
 # Produce a clean, self-contained production package via pnpm deploy.
 # `pnpm deploy` resolves workspace links and keeps only production deps.
 WORKDIR /app
-RUN pnpm --filter @dtc/backend deploy --prod /app/deployed \
+RUN pnpm --filter @dtc/backend deploy --legacy --prod /app/deployed \
     && rm -rf /app/deployed/.medusa \
     && cp -r apps/backend/.medusa /app/deployed/.medusa
 
