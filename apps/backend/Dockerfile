@@ -73,7 +73,7 @@ RUN pnpm --filter @dtc/backend deploy --prod /app/deployed \
 # runner — minimal production image
 # ==========================================================
 FROM node:22-slim AS runner
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@10.11.1 --activate
 ENV NODE_ENV=production \
     PORT=9000 \
     PATH=/app/node_modules/.bin:$PATH
