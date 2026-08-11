@@ -24,3 +24,5 @@ detail — a shared vocabulary only.
   `docs/adr/0001-github-primary-cnb-mirror.md`.
 
 - pnpm version pin (build fix): see `docs/adr/0002-pnpm-version-pin.md`.
+
+- pnpm deploy fix: see `docs/adr/0003-pnpm-deploy-legacy.md`.
