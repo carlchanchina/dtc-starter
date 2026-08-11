@@ -13,8 +13,13 @@
 # ==========================================================
 FROM node:22-slim AS base
 
-# pnpm comes from the repo's `packageManager` field (pnpm@10.11.1)
-RUN corepack enable
+# pnpm comes from the repo's `packageManager` field (pnpm@10.11.1).
+# Pin it GLOBALLY with `corepack prepare --activate` so every stage uses 10.11.1
+# regardless of cwd's packageManager field. Without this, the `builder` stage
+# (WORKDIR /app/apps/backend, which has no packageManager field) falls back to
+# the Node 22 distro default pnpm (11.x) and `pnpm exec medusa build` fails
+# with a deps-status-check error (runDepsStatusCheck -> sync2).
+RUN corepack enable && corepack prepare pnpm@10.11.1 --activate
 
 # Native-dependency build tooling (sharp, swc, msgpackr-extract, etc.)
 RUN apt-get update \
