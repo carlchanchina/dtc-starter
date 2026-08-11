@@ -1,0 +1,42 @@
+# CNB Cloud-Native Build pipeline — mirrors .github/workflows/build-image.yml
+#
+# Builds the Medusa backend image (apps/backend/Dockerfile) and pushes it to the
+# CNB container registry (the repo's 制品库). Auth uses CNB's auto-injected CI
+# credentials (CNB_TOKEN / CNB_TOKEN_USER_NAME), so no secrets are required.
+#
+# Image:
+#   registry.cnb.cool/<group>/<repo>/dtc-backend:<tag>
+# Tags:
+#   - push to main  -> :main and :<commit-sha>
+#   - pull_request  -> build only (no push)
+
+main:
+  push:
+    - docker:
+        # CI runner image (Docker CLI is injected by the `docker` service below)
+        image: node:22
+        # docker-in-docker daemon
+        services:
+          - docker
+        stages:
+          - name: docker login
+            script:
+              - docker login -u ${CNB_TOKEN_USER_NAME} -p "${CNB_TOKEN}" ${CNB_DOCKER_REGISTRY}
+          - name: docker build
+            script:
+              - docker build --platform linux/amd64 -f apps/backend/Dockerfile -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}/dtc-backend:main -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}/dtc-backend:${CNB_COMMIT} .
+          - name: docker push
+            script:
+              - docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}/dtc-backend:main
+              - docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}/dtc-backend:${CNB_COMMIT}
+
+pull_request:
+  push:
+    - docker:
+        image: node:22
+        services:
+          - docker
+        stages:
+          - name: docker build (no push)
+            script:
+              - docker build --platform linux/amd64 -f apps/backend/Dockerfile .
